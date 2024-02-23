@@ -87,22 +87,7 @@ void input_handler(Game* g) {
                 break;
             case SDL_KEYDOWN:
                 if (event.key.keysym.sym == 27) {
-                    g->quit = true;
-                }
-                if (event.key.keysym.sym == 49) {
-                    if (g->currentState != MENU) {
-                        g->currentState = MENU;
-                    }
-                }
-                if (event.key.keysym.sym == 50) {
-                    if (g->currentState != PLAY) {
-                        g->currentState = PLAY;
-                    }
-                }
-                if (event.key.keysym.sym == 51) {
-                    if (g->currentState != OVER) {
-                        g->currentState = OVER;
-                    }
+                    g->currentState = MENU;
                 }
                 break;
             case SDL_MOUSEMOTION:

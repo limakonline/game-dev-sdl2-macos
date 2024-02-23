@@ -20,35 +20,22 @@ enum state_btn {
     CLICKED = 2
 };
 
+typedef void (*btn_callback)(void);
+
 typedef struct {
     char* id;
     char* spriteSheet;
     enum state_btn currentState;
     Vec2f position;
     Vec2f dimension;
+    btn_callback callback;
 } Btn;
-
-Btn play_btn = {
-    .id = "play_btn",
-    .spriteSheet = "play_btn.png",
-    .currentState = MOUSE_OUT,
-    .position = {0, 0},
-    .dimension = {128, 32}
-};
-
-Btn exit_btn = {
-    .id = "exit_btn",
-    .spriteSheet = "exit_btn.png",
-    .currentState = MOUSE_OUT,
-    .position = {0, 40},
-    .dimension = {128, 32}
-};
 
 Game g = {
     .window = 0,
     .renderer = 0,
     .quit = false,
-    .currentState = PLAY,
+    .currentState = MENU,
     .mouse = {
         .position = {0, 0},
         .clicked = false
@@ -69,6 +56,31 @@ Player p = {
     },
 };
 
+void play_btn_callback(void) {
+    g.currentState = PLAY;
+}
+
+void exit_btn_callback(void) {
+    g.quit = true;
+}
+
+Btn play_btn = {
+    .id = "play_btn",
+    .spriteSheet = "play_btn.png",
+    .currentState = MOUSE_OUT,
+    .position = {0, 0},
+    .dimension = {128, 32},
+    .callback = play_btn_callback
+};
+
+Btn exit_btn = {
+    .id = "exit_btn",
+    .spriteSheet = "exit_btn.png",
+    .currentState = MOUSE_OUT,
+    .position = {0, 40},
+    .dimension = {128, 32},
+    .callback = exit_btn_callback
+};
 bool is_mouse_over_btn(Btn btn, Vec2f position) {
     float x = btn.position.x;
     float y = btn.position.y;
@@ -146,6 +158,7 @@ void move_player(void) {
 void menu_update(void) {
     if(is_mouse_over_btn(play_btn, g.mouse.position) && g.mouse.clicked) {
         play_btn.currentState = CLICKED;
+        play_btn.callback();
     } else if(is_mouse_over_btn(play_btn, g.mouse.position)) {
         play_btn.currentState = MOUSE_OVER;
     } else {
@@ -154,6 +167,7 @@ void menu_update(void) {
 
     if(is_mouse_over_btn(exit_btn, g.mouse.position) && g.mouse.clicked) {
         exit_btn.currentState = CLICKED;
+        exit_btn.callback();
     } else if(is_mouse_over_btn(exit_btn, g.mouse.position)) {
         exit_btn.currentState = MOUSE_OVER;
     } else {
