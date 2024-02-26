@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include "types.h"
 
+bool joystickButtons[16];
+bool keyboardKeys[200];
 
 enum STICK {
     L_HOR = 0,

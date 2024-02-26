@@ -7,6 +7,7 @@
 #include "libs/vector.h"
 #include "types.h"
 #include "input_handler.h"
+#include "buttons.h"
 
 #define WINDOW_W 640
 #define WINDOW_H 480
@@ -14,23 +15,8 @@
 const int FPS = 60;
 const int DELAY_TIME = 1000.0f / FPS;
 
-enum state_btn {
-    MOUSE_OUT = 0,
-    MOUSE_OVER = 1,
-    CLICKED = 2
-};
-
-typedef void (*btn_callback)(void);
-
-typedef struct {
-    char* id;
-    char* spriteSheet;
-    enum state_btn currentState;
-    Vec2f position;
-    Vec2f dimension;
-    btn_callback callback;
-} Btn;
-
+// TODO move this struct to something like global.h file
+// so it can be accessed and changed in different places
 Game g = {
     .window = 0,
     .renderer = 0,
@@ -42,13 +28,27 @@ Game g = {
     }
 };
 
-Player p = {
+GameObject p = {
     .defaultVelocity = 5,
     .currentFrame = 0,
     .animationSpritesheet = "char.png",
     .position = {
         .x = 100.0,
         .y = 100.0
+    },
+    .velocity = {
+        .x = 0,
+        .y = 0
+    },
+};
+
+GameObject e = {
+    .defaultVelocity = 0,
+    .currentFrame = 0,
+    .animationSpritesheet = "char.png",
+    .position = {
+        .x = 200.0,
+        .y = 200.0
     },
     .velocity = {
         .x = 0,
@@ -81,21 +81,6 @@ Btn exit_btn = {
     .dimension = {128, 32},
     .callback = exit_btn_callback
 };
-bool is_mouse_over_btn(Btn btn, Vec2f position) {
-    float x = btn.position.x;
-    float y = btn.position.y;
-    float w = btn.position.x + btn.dimension.x;
-    float h = btn.position.y + btn.dimension.y;
-
-    if(position.x >= x &&
-        position.x < w &&
-        position.y >= y &&
-        position.y < h) {
-        return true;
-    }
-
-    return false;
-}
 
 bool init(const char * title, Vec2f pos, int width, int height, int flags) {
     if (SDL_Init(SDL_INIT_EVERYTHING) >= 0) {
@@ -110,7 +95,9 @@ bool init(const char * title, Vec2f pos, int width, int height, int flags) {
 
     load(play_btn.spriteSheet, play_btn.id, g.renderer);
     load(exit_btn.spriteSheet, exit_btn.id, g.renderer);
+
     load(p.animationSpritesheet, "player", g.renderer);
+    load(e.animationSpritesheet, "enemy", g.renderer);
 
     play_btn.position = addVec2f(play_btn.position, vec2f(WINDOW_W / 2, WINDOW_H / 2));
     exit_btn.position = addVec2f(exit_btn.position, vec2f(WINDOW_W / 2, WINDOW_H / 2));
@@ -151,28 +138,39 @@ void move_player(void) {
         if(one_ud < -10000) {
             p.velocity.y = -p.defaultVelocity;
         }
+    } else {
+        if(keyboardKeys[SDLK_w]) {
+            p.velocity.x = p.defaultVelocity;
+        }
+
+        if(keyboardKeys[SDLK_s]) {
+            p.velocity.x = -p.defaultVelocity;
+        }
+
+        if(keyboardKeys[SDLK_a]) {
+            p.velocity.y = p.defaultVelocity;
+        }
+
+        if(keyboardKeys[SDLK_d]) {
+            p.velocity.y = -p.defaultVelocity;
+        }
     }
 }
 
+void update_btn_state(Btn* btn) {
+    if(is_mouse_over_btn(*btn, g.mouse.position) && g.mouse.clicked) {
+        btn->currentState = CLICKED;
+        btn->callback();
+    } else if(is_mouse_over_btn(*btn, g.mouse.position)) {
+        btn->currentState = MOUSE_OVER;
+    } else {
+        btn->currentState = MOUSE_OUT;
+    }
+}
 // TODO: maybe move it to different files like menu_state/play_state/etc.
 void menu_update(void) {
-    if(is_mouse_over_btn(play_btn, g.mouse.position) && g.mouse.clicked) {
-        play_btn.currentState = CLICKED;
-        play_btn.callback();
-    } else if(is_mouse_over_btn(play_btn, g.mouse.position)) {
-        play_btn.currentState = MOUSE_OVER;
-    } else {
-        play_btn.currentState = MOUSE_OUT;
-    }
-
-    if(is_mouse_over_btn(exit_btn, g.mouse.position) && g.mouse.clicked) {
-        exit_btn.currentState = CLICKED;
-        exit_btn.callback();
-    } else if(is_mouse_over_btn(exit_btn, g.mouse.position)) {
-        exit_btn.currentState = MOUSE_OVER;
-    } else {
-        exit_btn.currentState = MOUSE_OUT;
-    }
+    update_btn_state(&play_btn);
+    update_btn_state(&exit_btn);
 }
 
 void play_update(void) {
@@ -223,7 +221,8 @@ void menu_render(void) {
 
 void play_render(void) {
     p.frameNumber = (int) ((SDL_GetTicks() / 100) % 4);
-    drawFrame("player", p.position, 32, 32, 1, p.frameNumber, g.renderer, SDL_FLIP_NONE);
+    drawFrame("player", p.position, 32, 32, 1, p.frameNumber, g.renderer, SDL_FLIP_HORIZONTAL);
+    draw("enemy", e.position, 32, 32, g.renderer, SDL_FLIP_NONE);
 }
 
 void over_render(void) {

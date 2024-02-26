@@ -33,6 +33,6 @@ typedef struct {
     SDL_Texture* texture;
     SDL_Rect sourceRect;
     SDL_Rect destRect;
-} Player;
+} GameObject;
 
 #endif

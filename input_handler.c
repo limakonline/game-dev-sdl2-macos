@@ -8,7 +8,6 @@
 
 const int joystickDeadZone = 10000;
 int currentJoystick = -1;
-bool pressedButtons[16];
 
 void input_clean(void) {
     if(controllers != NULL && controllers->count > 0) {
@@ -22,8 +21,8 @@ void input_clean(void) {
 }
 
 void displayPressedButtons(void) {
-    for(int i = 0; i < (int)(sizeof(pressedButtons) / sizeof(bool)); i++) {
-        if(pressedButtons[i] == true) {
+    for(int i = 0; i < (int)(sizeof(joystickButtons) / sizeof(bool)); i++) {
+        if(joystickButtons[i] == true) {
             printf("Pressed: %d \n", i);
         }
     }
@@ -77,18 +76,23 @@ void input_handler(Game* g) {
                 break;
             case SDL_JOYBUTTONDOWN:
                 {
-                    pressedButtons[event.jbutton.button] = true;
+                    joystickButtons[event.jbutton.button] = true;
                 }
                 break;
             case SDL_JOYBUTTONUP:
                 {
-                    pressedButtons[event.jbutton.button] = false;
+                    joystickButtons[event.jbutton.button] = false;
                 }
                 break;
             case SDL_KEYDOWN:
-                if (event.key.keysym.sym == 27) {
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
                     g->currentState = MENU;
+                } else {
+                    keyboardKeys[event.key.keysym.sym] =  true;
                 }
+                break;
+            case SDL_KEYUP:
+                    keyboardKeys[event.key.keysym.sym] =  true;
                 break;
             case SDL_MOUSEMOTION:
                 {
