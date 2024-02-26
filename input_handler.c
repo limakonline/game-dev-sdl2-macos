@@ -92,7 +92,7 @@ void input_handler(Game* g) {
                 }
                 break;
             case SDL_KEYUP:
-                    keyboardKeys[event.key.keysym.sym] =  true;
+                    keyboardKeys[event.key.keysym.sym] =  false;
                 break;
             case SDL_MOUSEMOTION:
                 {

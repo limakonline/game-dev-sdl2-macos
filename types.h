@@ -27,6 +27,8 @@ typedef struct {
     char* animationSpritesheet;
     int currentFrame;
     int frameNumber;
+    int width;
+    int height;
     Vec2f position;
     Vec2f velocity;
 

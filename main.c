@@ -40,6 +40,8 @@ GameObject p = {
         .x = 0,
         .y = 0
     },
+    .width = 32,
+    .height = 32
 };
 
 GameObject e = {
@@ -54,6 +56,8 @@ GameObject e = {
         .x = 0,
         .y = 0
     },
+    .width = 32,
+    .height = 32
 };
 
 void play_btn_callback(void) {
@@ -62,6 +66,10 @@ void play_btn_callback(void) {
 
 void exit_btn_callback(void) {
     g.quit = true;
+}
+
+void restart_btn_callback(void) {
+    g.currentState = MENU;
 }
 
 Btn play_btn = {
@@ -82,6 +90,34 @@ Btn exit_btn = {
     .callback = exit_btn_callback
 };
 
+Btn restart_btn = {
+    .id = "restart",
+    .spriteSheet = "restart_btn.png",
+    .currentState = MOUSE_OUT,
+    .position = {0, 0},
+    .dimension = {128, 32},
+    .callback = restart_btn_callback
+};
+
+bool check_collision(GameObject p, GameObject e) {
+    int pLeft = p.position.x;
+    int pRight = p.position.x + p.width;
+    int pTop = p.position.y;
+    int pBottom = p.position.y + p.height;
+
+    int eLeft = e.position.x;
+    int eRight = e.position.x + e.width;
+    int eTop = e.position.y;
+    int eBottom = e.position.y + e.height;
+
+    if (pLeft >= eRight) { return false; }
+    if (pRight <= eLeft) { return false; }
+    if (pTop >= eBottom) { return false; }
+    if (pBottom <= eTop) { return false; }
+
+    return true;
+}
+
 bool init(const char * title, Vec2f pos, int width, int height, int flags) {
     if (SDL_Init(SDL_INIT_EVERYTHING) >= 0) {
         g.window = SDL_CreateWindow(title, pos.x, pos.y, width, height, flags);
@@ -95,18 +131,23 @@ bool init(const char * title, Vec2f pos, int width, int height, int flags) {
 
     load(play_btn.spriteSheet, play_btn.id, g.renderer);
     load(exit_btn.spriteSheet, exit_btn.id, g.renderer);
+    load(restart_btn.spriteSheet, restart_btn.id, g.renderer);
 
     load(p.animationSpritesheet, "player", g.renderer);
     load(e.animationSpritesheet, "enemy", g.renderer);
+    load("game_over.png", "game_over", g.renderer);
 
     play_btn.position = addVec2f(play_btn.position, vec2f(WINDOW_W / 2, WINDOW_H / 2));
     exit_btn.position = addVec2f(exit_btn.position, vec2f(WINDOW_W / 2, WINDOW_H / 2));
-
     play_btn.position.x -= play_btn.dimension.x / 2;
     play_btn.position.y -= play_btn.dimension.y / 2;
 
     exit_btn.position.x -= exit_btn.dimension.x / 2;
     exit_btn.position.y -= exit_btn.dimension.y / 2;
+
+    restart_btn.position = addVec2f(restart_btn.position, vec2f(WINDOW_W / 2, WINDOW_H / 2));
+    restart_btn.position.x -= restart_btn.dimension.x / 2;
+    restart_btn.position.y += 128;
 
     return true;
 }
@@ -140,19 +181,19 @@ void move_player(void) {
         }
     } else {
         if(keyboardKeys[SDLK_w]) {
-            p.velocity.x = p.defaultVelocity;
+            p.velocity.y = -p.defaultVelocity;
         }
 
         if(keyboardKeys[SDLK_s]) {
-            p.velocity.x = -p.defaultVelocity;
-        }
-
-        if(keyboardKeys[SDLK_a]) {
             p.velocity.y = p.defaultVelocity;
         }
 
+        if(keyboardKeys[SDLK_a]) {
+            p.velocity.x = -p.defaultVelocity;
+        }
+
         if(keyboardKeys[SDLK_d]) {
-            p.velocity.y = -p.defaultVelocity;
+            p.velocity.x = p.defaultVelocity;
         }
     }
 }
@@ -167,6 +208,7 @@ void update_btn_state(Btn* btn) {
         btn->currentState = MOUSE_OUT;
     }
 }
+
 // TODO: maybe move it to different files like menu_state/play_state/etc.
 void menu_update(void) {
     update_btn_state(&play_btn);
@@ -174,6 +216,9 @@ void menu_update(void) {
 }
 
 void play_update(void) {
+    if (check_collision(p, e)) {
+        g.currentState = OVER;
+    }
     p.velocity.x = 0;
     p.velocity.y = 0;
 
@@ -184,6 +229,7 @@ void play_update(void) {
 }
 
 void over_update(void) {
+    update_btn_state(&restart_btn);
 }
 
 void update(void) {
@@ -226,6 +272,17 @@ void play_render(void) {
 }
 
 void over_render(void) {
+    int x = WINDOW_W / 2 - 128;
+    int y = WINDOW_H / 2 - (256 * 3/4);
+    draw("game_over", vec2f(x, y), 256, 256, g.renderer, SDL_FLIP_NONE);
+
+    drawFrame(
+            restart_btn.id,
+            restart_btn.position,
+            restart_btn.dimension.x,
+            restart_btn.dimension.y,
+            1, 
+            restart_btn.currentState, g.renderer, SDL_FLIP_NONE);
 }
 
 void render(void) {
